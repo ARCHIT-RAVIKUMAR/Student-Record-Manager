@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Student Record Manager</title>
+<style>
+body{font-family:Arial,sans-serif;margin:0;padding:20px;background:#f4f4f4;color:#222}
+.box{max-width:800px;margin:auto}
+.stats,.controls{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:15px}
+.stats div{background:#fff;border:1px solid #ccc;padding:10px 14px;border-radius:6px}
+input,select{padding:7px;border:1px solid #bbb;border-radius:4px}
+.wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:#fff;min-width:480px}
+th,td{border:1px solid #ccc;padding:8px;text-align:left}
+th{background:#e8e8e8}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>Student Record Manager</h1>
+
+  <div class="stats">
+    <div>Total students: <b id="total">0</b></div>
+    <div>Average marks: <b id="average">0</b></div>
+    <div>Topper: <b id="topper">-</b></div>
+  </div>
+
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search by name">
+    <select id="courseFilter"></select>
+    <input type="number" id="minMarks" placeholder="Min marks" min="0" max="100">
+    <select id="sortBy">
+      <option value="">Sort by</option>
+      <option value="name-asc">Name (A-Z)</option>
+      <option value="name-desc">Name (Z-A)</option>
+      <option value="marks-desc">Marks (high to low)</option>
+      <option value="marks-asc">Marks (low to high)</option>
+    </select>
+  </div>
+
+  <div class="wrap">
+    <table>
+      <thead><tr><th>μid</th><th>Name</th><th>Course</th><th>Marks</th></tr></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// Replace the first record with your own name and μid
+const students = [
+  { muid: "YOUR_MUID", name: "Your Name", course: "Web Development", marks: 88 },
+  { muid: "MU1002", name: "Aarav Sharma", course: "Data Science", marks: 91 },
+  { muid: "MU1003", name: "Meera Nair", course: "Web Development", marks: 76 },
+  { muid: "MU1004", name: "Rohan Iyer", course: "Machine Learning", marks: 69 },
+  { muid: "MU1005", name: "Priya Menon", course: "Data Science", marks: 94 },
+  { muid: "MU1006", name: "Karthik Raja", course: "Machine Learning", marks: 82 },
+  { muid: "MU1007", name: "Sneha Pillai", course: "Web Development", marks: 58 }
+];
+
+const tableBody = document.getElementById("tableBody");
+const searchBox = document.getElementById("search");
+const courseFilter = document.getElementById("courseFilter");
+const minMarks = document.getElementById("minMarks");
+const sortBy = document.getElementById("sortBy");
+
+// fill course dropdown from the data
+const courses = [...new Set(students.map(s => s.course))];
+courseFilter.innerHTML = '<option value="all">All courses</option>';
+courses.forEach(c => {
+  courseFilter.innerHTML += `<option value="${c}">${c}</option>`;
+});
+
+function showStudents() {
+  const text = searchBox.value.toLowerCase();
+  const course = courseFilter.value;
+  const min = minMarks.value;
+
+  // search + filter
+  let list = students.filter(s => {
+    const nameOk = s.name.toLowerCase().includes(text);
+    const courseOk = course === "all" || s.course === course;
+    const marksOk = min === "" || s.marks >= Number(min);
+    return nameOk && courseOk && marksOk;
+  });
+
+  // sort
+  const [field, order] = sortBy.value.split("-");
+  if (field === "name") list.sort((a, b) => a.name.localeCompare(b.name));
+  if (field === "marks") list.sort((a, b) => a.marks - b.marks);
+  if (order === "desc") list.reverse();
+
+  // table
+  tableBody.innerHTML = "";
+  list.forEach(s => {
+    tableBody.innerHTML += `<tr><td>${s.muid}</td><td>${s.name}</td><td>${s.course}</td><td>${s.marks}</td></tr>`;
+  });
+
+  // stats using reduce()
+  document.getElementById("total").textContent = list.length;
+  if (list.length === 0) {
+    document.getElementById("average").textContent = 0;
+    document.getElementById("topper").textContent = "-";
+  } else {
+    const sum = list.reduce((acc, s) => acc + s.marks, 0);
+    const best = list.reduce((top, s) => s.marks > top.marks ? s : top);
+    document.getElementById("average").textContent = (sum / list.length).toFixed(1);
+    document.getElementById("topper").textContent = best.name + " (" + best.marks + ")";
+  }
+}
+
+searchBox.addEventListener("input", showStudents);
+minMarks.addEventListener("input", showStudents);
+courseFilter.addEventListener("change", showStudents);
+sortBy.addEventListener("change", showStudents);
+
+showStudents();
+</script>
+</body>
+</html>
